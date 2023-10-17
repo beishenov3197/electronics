@@ -3,7 +3,7 @@ Python
 
 ## Summary
 
-I've conducted a comprehensive analysis of the electronics sales data. Key insights include the identification of top-selling products, the revelation of peak sales hours and days for targeted marketing, and a nuanced understanding of sales trends over time, which will inform seasonal stock planning. Additionally, I've delved into the price-sales relationship and discovered cross-selling opportunities, providing actionable insights to enhance our business strategies and maximize sales in the electronics market.
+Conducted a comprehensive analysis of the electronics sales data. Key insights include the identification of top-selling products, the revelation of peak sales hours and days for targeted marketing, and a nuanced understanding of sales trends over time, which will inform seasonal stock planning. Additionally, delved into the price-sales relationship and discovered cross-selling opportunities, providing actionable insights to enhance our business strategies and maximize sales in the electronics market.
 
 ## Numeric summary
 numeric_summary = sales_data.describe()
