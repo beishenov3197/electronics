@@ -1,0 +1,119 @@
+# Electronics
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima_model import ARIMA
+import numpy as np
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+
+sales_data = pd.read_csv(r"C:\Users\user\Documents\Electronics\Electronics.csv")
+missing_data = sales_data.isnull().sum()
+sales_data['Order Date'] = pd.to_datetime(sales_data['Order Date'],errors='coerce')
+
+numeric_summary = sales_data.describe()
+print(numeric_summary)
+
+# Group the data by product and calculate the total quantity sold for each product
+top_selling_products = sales_data.groupby('Product')['Quantity Ordered'].sum()
+print("Top-Selling Products and Their Quantities:")
+print(top_selling_products)
+top_selling_products.to_csv("Quantities_Sold.csv")
+
+#Peak hours of sales
+sales_data['Order Date'] = pd.to_datetime(sales_data['Order Date'], errors='coerce')
+sales_data['Order Hour'] = sales_data['Order Date'].dt.hour
+peak_sales_hours = sales_data.groupby('Order Hour')['Quantity Ordered'].sum()
+peak_hour = peak_sales_hours.idxmax()
+print("Peak Sales Hours:")
+print(peak_sales_hours)
+print(f"The peak sales hour is at {peak_hour} o'clock.")
+peak_sales_hours.to_csv("Peak_hour.csv")
+
+# Peak Day
+sales_data['Order Day of Week'] = sales_data['Order Date'].dt.dayofweek
+peak_sales_days = sales_data.groupby('Order Day of Week')['Quantity Ordered'].sum()
+peak_day = peak_sales_days.idxmax()
+print("Peak Sales Days:")
+print(peak_sales_days)
+print(f"The peak sales day is on {peak_day} (0=Monday, 1=Tuesday, ..., 6=Sunday).")
+peak_sales_days.to_csv("Peak_day.csv")
+
+# Total cost
+sales_data['Total Cost'] = sales_data['Quantity Ordered'] * sales_data['Cost price']
+total_cost_of_products_sold = sales_data['Total Cost'].sum()
+print(f'Total Cost of Products Sold: ${total_cost_of_products_sold:.2f}')
+
+# Margin
+sales_data['Profit'] = (sales_data['turnover'] - sales_data['Cost price']) * sales_data['Quantity Ordered']
+total_profit = sales_data['Profit'].sum()
+sales_data['Profit Margin'] = (sales_data['Profit'] / sales_data['turnover'])
+average_profit_margin = sales_data['Profit Margin'].mean()
+print(f'Total Profit: ${total_profit:.2f}')
+print(f'Average Profit Margin: {average_profit_margin:.2%}')
+
+#  Most and least profitable products
+sales_data['Profit'] = (sales_data['turnover'] - sales_data['Cost price']) * sales_data['Quantity Ordered']
+product_profit = sales_data.groupby('Product')['Profit'].sum()
+most_profitable_products = product_profit.sort_values(ascending=False).head(5)  # Adjust 'head' to show more products if needed
+least_profitable_products = product_profit.sort_values().head(5)  # Adjust 'head' to show more products if needed
+print("Most Profitable Products:")
+print(most_profitable_products)
+print("\nLeast Profitable Products:")
+print(least_profitable_products)
+most_profitable_products.to_csv("profitable_products.csv")
+least_profitable_products.to_csv("least_profitable_products.csv")
+
+#Sales trends over time
+sales_data['Order Date'] = pd.to_datetime(sales_data['Order Date'], errors='coerce')
+monthly_sales = sales_data.resample('M', on='Order Date')['turnover'].sum()
+plt.figure(figsize=(12, 6))
+plt.plot(monthly_sales.index, monthly_sales.values, marker='o', linestyle='-')
+plt.xlabel('Month')
+plt.ylabel('Total Sales')
+plt.title('Monthly Sales Trends')
+plt.grid(True)
+plt.show()
+
+# Forecast future sales based on historical data.
+sales_data['Order Date'] = pd.to_datetime(sales_data['Order Date'], errors='coerce')
+daily_sales = sales_data.resample('D', on='Order Date')['turnover'].sum()
+arima_model = ARIMA(daily_sales, order=(1, 1, 1))
+arima_fit = arima_model.fit()
+future_forecast = arima_fit.forecast(steps=30)
+plt.figure(figsize=(12, 6))
+plt.plot(daily_sales.index, daily_sales.values, label='Historical Sales', color='blue')
+plt.plot(future_forecast.index, future_forecast, label='Sales Forecast', color='red')
+plt.xlabel('Date')
+plt.ylabel('Total Sales')
+plt.title('Historical and Forecasted Sales')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#Relationship between product price and sales
+product_price = sales_data['Price Each']
+sales = sales_data['turnover']
+plt.figure(figsize=(8, 6))
+plt.scatter(product_price, sales, alpha=0.5)
+plt.xlabel('Product Price')
+plt.ylabel('Sales (Turnover)')
+plt.title('Relationship between Product Price and Sales')
+plt.grid(True)
+correlation = np.corrcoef(product_price, sales)[0, 1]
+print(f'Correlation coefficient: {correlation:.2f}')
+plt.show()
+
+# Cross-selling opportunities, e.g., which products are often bought together.
+sales_data = pd.DataFrame(data, columns=columns)
+basket = (sales_data
+          .groupby(['Categorie', 'Product'])['Product']
+          .count().unstack().reset_index().fillna(0)
+          .set_index('Categorie'))
+frequent_itemsets = apriori(basket, min_support=0.05, use_colnames=True)
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=0.5)
+sorted_rules = rules.sort_values(by='lift', ascending=False)
+print(sorted_rules)
+sorted_rules.to_csv("Cross-selling.csv")
